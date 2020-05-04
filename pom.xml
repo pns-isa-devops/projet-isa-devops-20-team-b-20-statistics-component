@@ -10,4 +10,18 @@
     <artifactId>projet-isa-devops-20-team-b-20-statistics-component</artifactId>
     <version>2.0.5-SNAPSHOT</version>
 
+    <properties>
+        <versions.projet-isa-devops-20-team-b-20-entities>2.0.5-SNAPSHOT</versions.projet-isa-devops-20-team-b-20-entities>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.unice.polytech.isadevops.dronedelivery</groupId>
+            <artifactId>projet-isa-devops-20-team-b-20-entities</artifactId>
+            <version>${versions.projet-isa-devops-20-team-b-20-entities}</version>
+        </dependency>
+    </dependencies>
+
 </project>
+
