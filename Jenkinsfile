@@ -47,10 +47,11 @@ pipeline{
         }
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate true
+                catchError(buildResult: "SUCCESS", stageResult: "FAILURE") {
+                    timeout(time: 1, unit: "HOURS") {
+                        waitForQualityGate true
+                    }
                 }
-                echo 'passed'
             }
         }
     }
