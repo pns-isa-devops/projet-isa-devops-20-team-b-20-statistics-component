@@ -1,23 +1,16 @@
 package arquillian;
 
-import fr.polytech.entities.Delivery;
-import org.hsqldb.Database;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.ClassLoaderAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import statistics.StatisticsBean;
-import statistics.StatisticsCollector;
-import statistics.StatisticsCreator;
 
-import javax.ejb.EJB;
+import statistics.StatisticsBean;
 
 /**
  * AbstractEntitiesTest
  */
 public class AbstractStatisticsTest {
-
 
     @Deployment
     public static WebArchive createDeployment() {

@@ -1,26 +1,23 @@
 package statistics;
 
-import fr.polytech.entities.Drone;
-import fr.polytech.entities.DroneInformation;
+import java.util.GregorianCalendar;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Level;
 
+import fr.polytech.entities.Drone;
+import fr.polytech.entities.DroneInformation;
 
 @Stateless
-public class StatisticsBean implements StatisticsCollector, StatisticsCreator{
+public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
 
     @EJB
     StatisticsCollector statisticsCollector;
@@ -37,8 +34,7 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator{
 
     }
 
-
-    private Drone getDroneFromId(String droneId){
+    private Drone getDroneFromId(String droneId) {
         // GET the drone
 
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
@@ -47,18 +43,8 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator{
         criteria.select(root).where(builder.equal(root.get("droneId"), droneId));
 
         TypedQuery<Drone> query = entityManager.createQuery(criteria);
-        try {
-            Optional<Drone> droneOptional =  Optional.of(query.getSingleResult());
-            if (droneOptional.isPresent()) {
-                return droneOptional.get();
-
-            } else {
-                return null;
-                //  throw new DroneNotFoundException("The drone 000 has not been found.");
-            }
-        } catch (NoResultException e) {
-            return null;
-        }
+        Optional<Drone> droneOptional = Optional.of(query.getSingleResult());
+        return droneOptional.isPresent() ? droneOptional.get() : null;
     }
 
     @Override
@@ -67,18 +53,18 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator{
         // GET the drone
 
         Drone drone = getDroneFromId(droneId);
-        System.out.println(drone);
 
+        if (drone == null) {
+            return 0.0;
+        }
         // Get occupancies
 
         DroneInformation droneInformation = drone.getDroneInformationAtDate(new GregorianCalendar());
 
-        if(droneInformation != null){
-            return droneInformation.getOccupationRate()/HOURS_OF_OCCUPANCY_MAX;
-        }
-        else{
+        if (droneInformation != null) {
+            return droneInformation.getOccupationRate() / HOURS_OF_OCCUPANCY_MAX;
+        } else {
             return 0.0;
-
         }
     }
 
@@ -86,31 +72,30 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator{
     public void addOccupancy(String droneId, GregorianCalendar date, double duration) {
 
         Drone drone = getDroneFromId(droneId);
+        if (drone == null) {
+            return;
+        }
 
         DroneInformation droneInformation = drone.getDroneInformationAtDate(date);
 
         // Recalculate the occupancy by using HOURS_MAX and duration
-        if(droneInformation != null){
+        if (droneInformation != null) {
             double currentOccupancy = droneInformation.getOccupationRate();
 
             currentOccupancy = currentOccupancy + duration;
             droneInformation.setOccupationRate(currentOccupancy);
 
-        }
-        else{
-            droneInformation = new DroneInformation(date,drone);
+        } else {
+            droneInformation = new DroneInformation(date, drone);
             droneInformation.setOccupationRate(duration);
             entityManager.persist(droneInformation);
-
 
             Set<DroneInformation> droneInformations = drone.getDroneInformation();
             droneInformations.add(droneInformation);
         }
 
-        //Persist
+        // Persist
         entityManager.persist(drone);
-
 
     }
 }
-

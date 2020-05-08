@@ -1,8 +1,6 @@
 package statistics;
 
 import javax.ejb.Local;
-import fr.polytech.entities.Drone;
-
 
 @Local
 public interface StatisticsCollector {
