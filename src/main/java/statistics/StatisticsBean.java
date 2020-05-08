@@ -77,7 +77,7 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
             droneInformation.setOccupationRate(currentOccupancy);
 
         } else {
-            droneInformation = new DroneInformation(date, drone);
+            droneInformation = new DroneInformation(date);
             droneInformation.setOccupationRate(duration);
             entityManager.persist(droneInformation);
 
