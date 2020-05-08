@@ -3,10 +3,13 @@ package statistics;
 import java.util.GregorianCalendar;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -15,9 +18,12 @@ import javax.persistence.criteria.Root;
 
 import fr.polytech.entities.Drone;
 import fr.polytech.entities.DroneInformation;
+import statistics.exception.NoOccupancyOnThatDroneException;
 
 @Stateless
 public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
+
+    private static final Logger log = Logger.getLogger(StatisticsBean.class.getName());
 
     @EJB
     StatisticsCollector statisticsCollector;
@@ -34,48 +40,33 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
 
     }
 
-    private Drone getDroneFromId(String droneId) {
-        // GET the drone
-
+    private Optional<Drone> getDroneFromId(String droneId) {
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Drone> criteria = builder.createQuery(Drone.class);
         Root<Drone> root = criteria.from(Drone.class);
         criteria.select(root).where(builder.equal(root.get("droneId"), droneId));
 
         TypedQuery<Drone> query = entityManager.createQuery(criteria);
-        Optional<Drone> droneOptional = Optional.of(query.getSingleResult());
-        return droneOptional.isPresent() ? droneOptional.get() : null;
+        try {
+            return Optional.of(query.getSingleResult());
+        } catch (NoResultException e) {
+            log.log(Level.FINEST, "No result for [" + droneId + "]", e);
+            return Optional.empty();
+        }
     }
 
     @Override
-    public double getOccupancyRate(String droneId) {
-
-        // GET the drone
-
-        Drone drone = getDroneFromId(droneId);
-
-        if (drone == null) {
-            return 0.0;
-        }
-        // Get occupancies
-
+    public double getOccupancyRate(String droneId) throws NoOccupancyOnThatDroneException {
+        Drone drone = getDrone(droneId);
         DroneInformation droneInformation = drone.getDroneInformationAtDate(new GregorianCalendar());
+        return droneInformation != null ? droneInformation.getOccupationRate() / HOURS_OF_OCCUPANCY_MAX : 0.0;
 
-        if (droneInformation != null) {
-            return droneInformation.getOccupationRate() / HOURS_OF_OCCUPANCY_MAX;
-        } else {
-            return 0.0;
-        }
     }
 
     @Override
-    public void addOccupancy(String droneId, GregorianCalendar date, double duration) {
-
-        Drone drone = getDroneFromId(droneId);
-        if (drone == null) {
-            return;
-        }
-
+    public void addOccupancy(String droneId, GregorianCalendar date, double duration)
+            throws NoOccupancyOnThatDroneException {
+        Drone drone = getDrone(droneId);
         DroneInformation droneInformation = drone.getDroneInformationAtDate(date);
 
         // Recalculate the occupancy by using HOURS_MAX and duration
@@ -93,9 +84,13 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
             Set<DroneInformation> droneInformations = drone.getDroneInformation();
             droneInformations.add(droneInformation);
         }
+    }
 
-        // Persist
-        entityManager.persist(drone);
-
+    private Drone getDrone(String droneId) throws NoOccupancyOnThatDroneException {
+        Optional<Drone> drone = getDroneFromId(droneId);
+        if (!drone.isPresent()) {
+            throw new NoOccupancyOnThatDroneException(droneId);
+        }
+        return drone.get();
     }
 }

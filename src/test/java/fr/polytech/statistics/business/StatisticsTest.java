@@ -27,6 +27,7 @@ import arquillian.AbstractStatisticsTest;
 import fr.polytech.entities.Drone;
 import statistics.StatisticsCollector;
 import statistics.StatisticsCreator;
+import statistics.exception.NoOccupancyOnThatDroneException;
 
 /**
  * StatisticsTest
@@ -59,7 +60,7 @@ public class StatisticsTest extends AbstractStatisticsTest {
     }
 
     @Test
-    public void OccupancyTest() {
+    public void OccupancyTest() throws NoOccupancyOnThatDroneException {
 
         // Add an occupancy delivery
         statisticsCreator.addOccupancy(drone1.getDroneId(), new GregorianCalendar(), 0.25);
@@ -74,7 +75,7 @@ public class StatisticsTest extends AbstractStatisticsTest {
     }
 
     @Test
-    public void OccupancyTestTwoDays() {
+    public void OccupancyTestTwoDays() throws NoOccupancyOnThatDroneException {
         // fixed date
         GregorianCalendar fixedDay = new GregorianCalendar(2018, 5, 30);
 
