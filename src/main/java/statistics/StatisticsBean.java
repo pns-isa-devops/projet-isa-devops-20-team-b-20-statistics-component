@@ -31,7 +31,7 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
     @EJB
     StatisticsCreator statisticsCreator;
 
-    private final static int HOURS_OF_OCCUPANCY_MAX = 10;
+    private final static int HOURS_OF_OCCUPANCY_MAX = 1000;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -73,13 +73,14 @@ public class StatisticsBean implements StatisticsCollector, StatisticsCreator {
         if (droneInformation != null) {
             double currentOccupancy = droneInformation.getOccupationRate();
 
-            currentOccupancy = currentOccupancy + duration;
+            currentOccupancy = currentOccupancy + duration*100;
             droneInformation.setOccupationRate(currentOccupancy);
 
         } else {
             droneInformation = new DroneInformation(date);
-            droneInformation.setOccupationRate(duration);
+            droneInformation.setOccupationRate(duration*100);
             entityManager.persist(droneInformation);
+            droneInformation = entityManager.merge(droneInformation);
 
             Set<DroneInformation> droneInformations = drone.getDroneInformation();
             droneInformations.add(droneInformation);
